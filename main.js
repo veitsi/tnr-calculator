@@ -1,43 +1,17 @@
-console.log("main script started");
 document.write("main script started, ");
-//some new comment
-
-//document.write("initScheme started, ");
+document.write("initScheme started, ");
     eps=0.001;
     in1=new Stream(12,0.05);
     in2=new Stream(10,0.17);
+    in3=new Stream(); document.write("in3:"+in3.Show());
     out1=new Stream();
     out2=new Stream(0,0);
     Streams = [in1,in2,out1,out2];
-//document.write("out1:"+out1.Show())
-//document.write("Streams[0]"+Streams[0].Show());
-//
-//Mixer(in1,in2,out1);
-//document.writeln("Start mixing");
-//document.write("out1:"+out1.Show());
-//
-//Mem(in1, 0.15, 0.95, out1, out2);
-//document.writeln("Start membraning");
-//document.write("out1:"+out1.Show());
 
-s1=new Source(20,0.03);
-s2=new Sink();
-mx=new Mixer();
+s1=new Source(14,0.08);
+mx=new Mixer(20);
 mb=new Mem(0.15,0.95);
-
-//s2.in1=s1.out1;
-//s2.in1.v=7;
-//document.write("s1:"+s1.out1.Show());
-//document.write("s2="+s2.in1.Show());
-g=new Gainer(3);
-g.in1=s1.out1;
-g.calc();
-document.write("s1:"+s1.out1.Show());
-document.write("after gainer:v="+ g.out1.Show());
-
-//Splitter(in1,0.2,out1,out2);
-//document.write(",out1 after splitter:"+out1.Show());
-//document.write(",out2 after splitter:"+out2.Show());
+s2=new Sink();
 
 function Source(v,c){
     this.out1=new Stream(v,c);
@@ -48,8 +22,8 @@ function Sink(){
     this.calc=function(){};
 }
 
-function Gainer(ak){
-    this.k=ak;
+function Gainer(k){
+    this.k=k;
     this.in1=null;
     this.out1=new Stream();
     this.calc=function(){
@@ -57,36 +31,48 @@ function Gainer(ak){
         this.out1.c=this.k*this.in1.c;
         this.in1.v/=this.k;
         this.in1.c/=this.k;
+        this.selfCheck=false;
     }
 }
 
 function Stream(v,c){
-    this.v=v||0;
-    this.c=c||0;
+    this.v=v||null;
+    this.c=c||null;
     this.selfCheck=false;
     this.Show=function(){//how to add default values?
         return "volume="+this.v+",conc="+this.c+",selfCheck:"+this.selfCheck+"; ";
     }
 }
 
-function Mixer(){
-    this.in1=undefined;
-    this.in2=undefined;
+function Mixer(fixedV){
+    this.in1=null;
+    this.in2=null;
     this.out1=new Stream();
     this.calc=function(){
-        out1.v=in1.v+in2.v;
-        out1.c =(in1.v*in1.c+in2.v*in2.c)/out1.v;
-        out1.selfCheck=Math.abs((in1.v*in1.c+in2.v*in2.c)-(out1.v*out1.c))<eps;
-        return out1;
+        this.out1.v=fixedV||this.in1.v+this.in2.v;
+        this.in2.v=this.in1.v||this.out1.v/3;
+        this.in2.c=this.in2.c||3*this.in1.c;
+        this.in1.v=this.out1.v-this.in2.v;
+        this.out1.c =(this.in1.v*this.in1.c+this.in2.v*this.in2.c)/this.out1.v;
+        this.out1.selfCheck=Math.abs
+        ((this.in1.v*this.in1.c+this.in2.v*this.in2.c)-(this.out1.v*this.out1.c))<eps;
     }
 }
-function Mem(kV,kC){
-    this.kV=kV;
-    this.kG=kC;
-    this.in1=undefined;
-    this.out1=new Stream();
-    this.out2=new Stream();
-    this.calc=MemCalc; //(this.in1,this.kV,this.kG,this.out1,this.out2);
+function Mem(kV,kC) {
+    this.kv = kV||0.15;
+    this.kc = kC||0.95;
+    this.in1 = null;
+    this.out1 = new Stream();
+    this.out2 = new Stream();
+    this.calc = function () {
+        this.out1.v = this.in1.v * this.kv;
+        this.out1.c = this.in1.c * (1 - this.kc);
+        this.out2.v = this.in1.v * (1 - this.kv);
+        this.out2.c = (this.in1.v * this.in1.c - this.out1.v * this.out1.c) / this.out2.v;
+        this.out1.selfCheck = out2.selfCheck = Math.abs
+        (in1.v * in1.c - (out1.v * out1.c + out2.v * out2.c)) < eps;
+
+    }
 }
 
 function MixerCalc(in1,in2,out1){
