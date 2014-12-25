@@ -1,7 +1,7 @@
 console.log("main script started");
 document.write("main script started, ");
 //some new comment
-//initScheme(){
+
 //document.write("initScheme started, ");
     eps=0.001;
     in1=new Stream(12,0.05);
