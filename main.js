@@ -13,6 +13,16 @@ mx=new Mixer(20);
 mb=new Mem(0.15,0.95);
 s2=new Sink();
 
+mx.in1=s1.out1;
+mx.in2=mb.out2;
+mb.in1=mx.out1;
+s2.in1=mb.out1;
+
+for (int i=0;i<10;i++){
+    mx.calc();
+    mb.calc();
+}
+
 function Source(v,c){
     this.out1=new Stream(v,c);
     this.calc=function(){};
